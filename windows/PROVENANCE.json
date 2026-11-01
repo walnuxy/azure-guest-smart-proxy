@@ -1,0 +1,23 @@
+{
+  "core": {
+    "packaged_path": "bin/mihomo.exe",
+    "sha256": "98986b574e41f92b22ed65aa42a61ad8cadf886cc7b3f76b722cd73a3a52d878",
+    "local_source_path": "D:\\Program Files\\Clash Verge\\verge-mihomo.exe",
+    "source_sha256": "98986b574e41f92b22ed65aa42a61ad8cadf886cc7b3f76b722cd73a3a52d878",
+    "matches_local_source": true,
+    "reported_version": "Mihomo Meta v1.19.29 windows amd64 (locally installed vendor bundle)",
+    "verification_note": "Copied from the existing local Clash Verge installation; not claimed to be freshly downloaded or Authenticode verified."
+  },
+  "public_geodata": [
+    {
+      "path": "Country.mmdb",
+      "bytes": 8000653,
+      "sha256": "0edf8a9651a7b21af9234bb176dacb727fbd32149e19cc5a2a2163317a8f10fe"
+    },
+    {
+      "path": "geosite.dat",
+      "bytes": 4229320,
+      "sha256": "2c185fdfac8f0aac556cfceee6b66b9353779d3ef6deff3b4acc0132d7515546"
+    }
+  ]
+}
