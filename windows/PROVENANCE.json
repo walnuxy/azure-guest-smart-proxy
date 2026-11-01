@@ -1,12 +1,21 @@
 {
   "core": {
     "packaged_path": "bin/mihomo.exe",
-    "sha256": "98986b574e41f92b22ed65aa42a61ad8cadf886cc7b3f76b722cd73a3a52d878",
-    "local_source_path": "D:\\Program Files\\Clash Verge\\verge-mihomo.exe",
-    "source_sha256": "98986b574e41f92b22ed65aa42a61ad8cadf886cc7b3f76b722cd73a3a52d878",
-    "matches_local_source": true,
-    "reported_version": "Mihomo Meta v1.19.29 windows amd64 (locally installed vendor bundle)",
-    "verification_note": "Copied from the existing local Clash Verge installation; not claimed to be freshly downloaded or Authenticode verified."
+    "sha256": "926bfea2ce48a247d6a7ce4cf641980e416202d5e40fe4ee5c949089ace0e197",
+    "reported_version": "Mihomo Meta v1.19.33 windows amd64-compatible with go1.26.10; with_gvisor build",
+    "release_url": "https://github.com/MetaCubeX/mihomo/releases/tag/v1.19.33",
+    "official_asset_url": "https://github.com/MetaCubeX/mihomo/releases/download/v1.19.33/mihomo-windows-amd64-compatible-v1.19.33.zip",
+    "official_asset_name": "mihomo-windows-amd64-compatible-v1.19.33.zip",
+    "official_asset_digest": "sha256:7aaf636a4f2172dcd8ec34ac4f52797b059195e5afd6409508c963e545f8864d",
+    "archive_sha256": "7aaf636a4f2172dcd8ec34ac4f52797b059195e5afd6409508c963e545f8864d",
+    "checksum_source": "GitHub official release asset digest API; verified against downloaded archive",
+    "verification_note": "Official release archive digest verified; extracted executable SHA-256 recorded separately. No Authenticode verification claim.",
+    "wireguard_defaults": {
+      "ip-stack": {
+        "mode": "mips",
+        "congestion-controller": "bbr3"
+      }
+    }
   },
   "public_geodata": [
     {

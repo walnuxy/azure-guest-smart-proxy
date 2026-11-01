@@ -5,7 +5,7 @@
 ## 必须先检查目标电脑
 
 1. 读取本机适用的 AGENTS.md，确认当前电脑、用户、Codex 安装方式和 CODEX_HOME。此内核包适用于 Windows 64 位 AMD64；脚本会检查架构，ARM64 等平台须另选官方匹配架构内核并更新来源记录。不要把源电脑的路径、端口、订阅或环境变量照搬过来。
-2. 核对 PROVENANCE.json 中 bin/mihomo.exe 与公共 GEO 文件的 SHA-256。该内核来自源机已有 Clash Verge vendor bundle，非声称刚从官网重新下载或完成签名验证。若来源不符合目标用户要求，请从官方项目核实后替换，并记录新来源。
+2. 核对 PROVENANCE.json 中 bin/mihomo.exe 与公共 GEO 文件的 SHA-256。内核现为 MetaCubeX/mihomo 官方 v1.19.33 windows-amd64-compatible release，已核对官方下载 ZIP 与 GitHub asset digest，并单独记录解压后 EXE 哈希；这不等于声称完成 Authenticode 验证。AzureGuest 使用 MIPS/BBR3 栈修正旧版用户态上传表现。若需要替换内核，必须核实官方来源并更新记录。
    最终清单为 `SHA256SUMS.txt`（SHA-256、两个空格、相对路径）。先用独立的系统哈希工具核对 `Verify-Package.ps1` 自身与清单中的条目；确认一致后，仅对这个入口执行 Unblock-File，再以本进程 RemoteSigned 运行它。入口会严格检查全部清单文件、拒绝越界路径和重解析点，并仅对通过哈希校验的包内 `.ps1` 自动 Unblock，不需再次询问。若文件缺失或哈希不符则停止，不执行或解锁它们。使用进程级 `powershell.exe -NoProfile -ExecutionPolicy RemoteSigned` 执行本包；不修改持久 ExecutionPolicy，不绕过公司 MachinePolicy。若受管理策略仍阻止执行，交接给用户或管理员。
 3. 使用普通用户 PowerShell 5.1 或更新版本运行 `Inspect-LocalProxy.ps1`。它先检查 WinINET、进程环境、常见端口，以及 GoFast/Clash/Mihomo/V2Ray/Xray/sing-box 等相关进程的全部本地监听（包含自定义端口）；再对候选执行真实 OpenAI HTTPS HEAD 检查（证书校验开启，要求 robots.txt 返回 200），不是仅检查端口存在。不会扫描陌生远程服务；误入候选的控制 API 会因实际 HTTPS 不通过而排除。
 4. 阅读 state/local-proxy-report.json 的安全摘要。确认真实监听进程、目标本机已有 GoFast/Clash 等端口、目标现有规则文件和是否存在 TUN/全局 VPN。认证 URI 会被省略，不能在日志或聊天打印代理凭据。报告只覆盖当前进程环境与可见监听，仍须核对用户级/机器级变量、Codex 启动父进程以及项目覆盖。
@@ -16,6 +16,8 @@
 运行 `Configure-GuestProxy.ps1`，可显式传 `-RuleSourcePath <本机已确认的Clash配置路径>`。只接受本电脑最近 30 分钟的检查报告；为每个备用代理重新做 HTTPS 检测；从 17890 和 19090 起选择空闲入口/控制端口。真正采用的地址写入 state/deployment.json，后续全部读取实际值。
 
 主出站 AzureGuest 使用包内访客凭据，备用仅引用目标电脑已经运行且检测健康的本地接口，不读取或复制现有订阅/节点凭据。最多保留 4 个备用端口，自动排除本实例端口。没有健康备用时仍可生成 Azure 单出口，但必须告知用户尚无故障回退能力。
+
+AzureGuest 节点明确配置 `ip-stack.mode=mips`、`congestion-controller=bbr3`，需要本包官方 1.19.33 内核。旧 1.19.29 不支持这组字段，不能只添加字段而保留旧核心。已部署机器升级见 UPGRADE-v2.md；无需更换访客密钥或服务器身份。
 
 规则优先迁移本机可识别的规则：保留先后顺序和 DIRECT/REJECT，将其他原组名映射 AUTO；跳过旧最终 MATCH 和 IPv4/IPv6 全网兜底，最后使用中国域名/IP DIRECT、其余 AUTO。OpenAI 域名提前 AUTO。依赖未随迁移的 RULE-SET、脚本或复杂逻辑会计数跳过，必须向用户说明并由你判断是否补迁移，不能宣称原规则百分百等价。
 

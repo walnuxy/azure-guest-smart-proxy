@@ -28,6 +28,7 @@ $mixedPort = Find-FreePort 17890
 $apiPort = Find-FreePort 19090 @($mixedPort)
 $proxies = New-Object Collections.Generic.List[object]
 $azure = [ordered]@{ name = 'AzureGuest'; type = 'wireguard'; server = $guest.server; port = [int]$guest.port; ip = ([string]$guest.address).Split('/')[0]; 'private-key' = $guest.privateKey; 'public-key' = $guest.publicKey; 'pre-shared-key' = $guest.presharedKey; 'allowed-ips' = @('0.0.0.0/0'); 'persistent-keepalive' = 25; udp = $true; mtu = [int](Get-PropertyValue $guest 'mtu' 1280); 'remote-dns-resolve' = $true; dns = @('tcp://1.1.1.1:53','tcp://8.8.8.8:53') }
+$azure['ip-stack'] = [ordered]@{ mode = 'mips'; 'congestion-controller' = 'bbr3' }
 $proxies.Add($azure)
 $names = New-Object Collections.Generic.List[string]
 $names.Add('AzureGuest')
