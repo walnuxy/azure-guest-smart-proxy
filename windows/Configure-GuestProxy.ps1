@@ -89,7 +89,7 @@ Protect-PrivateFile $credentialPath
 # listeners, TUN, a Windows service or change any system proxy settings.
 & $core -t -d $script:StateRoot -f $configPath
 if ($LASTEXITCODE -ne 0) { throw 'Mihomo rejected the generated configuration. Do not start or integrate it.' }
-$deployment = [ordered]@{ SchemaVersion = 1; GeneratedUtc = [DateTime]::UtcNow.ToString('o'); ComputerName = $env:COMPUTERNAME; CorePath = $core; CoreSha256 = (Get-FileHash -LiteralPath $core -Algorithm SHA256).Hash; MixedPort = $mixedPort; ApiPort = $apiPort; Fallbacks = $fallbacks; RuleSource = $RuleSourcePath; SourceRuleCount = $sourceCount; MigratedRuleCount = $keptCount; SkippedRuleCount = $skippedCount; TotalRuleCount = $rules.Count; TunEnabled = $false; SystemProxyModified = $false }
+$deployment = [ordered]@{ SchemaVersion = 1; GeneratedUtc = [DateTime]::UtcNow.ToString('o'); ComputerName = $env:COMPUTERNAME; CorePath = $core; CoreSha256 = (Get-GuestFileHash -LiteralPath $core -Algorithm SHA256).Hash; MixedPort = $mixedPort; ApiPort = $apiPort; Fallbacks = $fallbacks; RuleSource = $RuleSourcePath; SourceRuleCount = $sourceCount; MigratedRuleCount = $keptCount; SkippedRuleCount = $skippedCount; TotalRuleCount = $rules.Count; TunEnabled = $false; SystemProxyModified = $false }
 Write-JsonFile $deployment (Join-Path $script:StateRoot 'deployment.json')
 Write-Output ('Validated guest configuration. HTTP/SOCKS entry: 127.0.0.1:' + $mixedPort)
 Write-Output ('Healthy local backups: ' + $fallbacks.Count + '; migrated local rules: ' + $keptCount + '; unsupported rules skipped: ' + $skippedCount)

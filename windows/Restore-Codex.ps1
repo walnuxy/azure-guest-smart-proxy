@@ -7,11 +7,11 @@ if (!(Test-Path -LiteralPath $recordPath)) { throw 'No tracked Codex integration
 $record = Read-JsonFile $recordPath
 $expected = [string](Get-PropertyValue $record 'AppliedEnvHash' '')
 if (!$expected -or !(Test-Path -LiteralPath $record.EnvPath -PathType Leaf)) { throw 'Tracked applied .env or its hash is unavailable. Stop and manually review/merge the local backup; no files were changed.' }
-if ((Get-FileHash -LiteralPath $record.EnvPath -Algorithm SHA256).Hash -ne $expected) { throw 'Codex .env was edited after guest integration. Stop and manually merge the backup; no subsequent user changes were overwritten.' }
+if ((Get-GuestFileHash -LiteralPath $record.EnvPath -Algorithm SHA256).Hash -ne $expected) { throw 'Codex .env was edited after guest integration. Stop and manually merge the backup; no subsequent user changes were overwritten.' }
 if ($record.Backup) {
     if (!(Test-Path -LiteralPath $record.Backup -PathType Leaf)) { throw 'Original .env backup is missing. No files were changed.' }
     $backupHash = [string](Get-PropertyValue $record 'BackupSha256' '')
-    if (!$backupHash -or (Get-FileHash -LiteralPath $record.Backup -Algorithm SHA256).Hash -ne $backupHash) { throw 'Backup integrity differs from the recorded original. Review it manually; no files were changed.' }
+    if (!$backupHash -or (Get-GuestFileHash -LiteralPath $record.Backup -Algorithm SHA256).Hash -ne $backupHash) { throw 'Backup integrity differs from the recorded original. Review it manually; no files were changed.' }
     Copy-Item -LiteralPath $record.Backup -Destination $record.EnvPath -Force
     Protect-PrivateFile $record.EnvPath
     Write-Output 'Original Codex .env restored from its verified backup.'

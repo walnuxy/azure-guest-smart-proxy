@@ -1,12 +1,13 @@
 ﻿#Requires -Version 5.1
 [CmdletBinding()]
-param([switch]$VerifyOnly)
+param([switch]$VerifyOnly,[string]$ManifestName='SHA256SUMS.txt')
 Set-StrictMode -Version 2.0
 $ErrorActionPreference = 'Stop'
 Import-Module Microsoft.PowerShell.Utility -Scope Local
 $packageRoot = [IO.Path]::GetFullPath($PSScriptRoot).TrimEnd('\','/')
 $rootPrefix = $packageRoot + [IO.Path]::DirectorySeparatorChar
-$manifestPath = Join-Path $packageRoot 'SHA256SUMS.txt'
+if ([IO.Path]::GetFileName($ManifestName) -ne $ManifestName -or $ManifestName.Contains(':')) { throw 'Use a manifest filename inside this package.' }
+$manifestPath = Join-Path $packageRoot $ManifestName
 if (!(Test-Path -LiteralPath $manifestPath -PathType Leaf)) { throw 'Missing SHA256SUMS.txt; no files were executed or unblocked.' }
 function Get-Sha256([string]$Path) {
     $algorithm = [Security.Cryptography.SHA256]::Create()
@@ -41,7 +42,7 @@ foreach ($line in [IO.File]::ReadAllLines($manifestPath, [Text.Encoding]::UTF8))
     $verified.Add([pscustomobject]@{ Path = $path; Sha256 = $expected })
 }
 if (!$verified.Count) { throw 'Checksum manifest is empty.' }
-Write-Output ('Verified ' + $verified.Count + ' package files against SHA256SUMS.txt.')
+Write-Output ('Verified ' + $verified.Count + ' listed files against ' + $ManifestName + '. This does not verify unlisted local files.')
 if ($VerifyOnly) { Write-Output 'Verify-only mode; no download markers changed.'; return }
 $count = 0
 foreach ($file in $verified) {

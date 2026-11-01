@@ -1,14 +1,18 @@
-﻿# Requires -Version 5.1
+﻿#Requires -Version 5.1
 [CmdletBinding()]
 param()
-. (Join-Path $PSScriptRoot 'scripts/Common.ps1')
-$pidPath = Join-Path $script:StateRoot 'listener.json'
-if (!(Test-Path -LiteralPath $pidPath)) { Write-Output 'No tracked guest listener.'; return }
-$tracked = Read-JsonFile $pidPath
-$owner = Get-CimInstance Win32_Process -Filter ('ProcessId=' + $tracked.ListenerPid) -ErrorAction SilentlyContinue
-if ($owner) {
-    if ($owner.ExecutablePath -ne $tracked.CorePath -or !$owner.CommandLine.Contains($tracked.ConfigPath)) { throw 'PID was reused or belongs to another process; refusing to stop it.' }
-    Stop-Process -Id $tracked.ListenerPid
+. (Join-Path $PSScriptRoot 'scripts/Lifecycle.ps1')
+Ensure-StateDirectory
+[IO.File]::WriteAllText($script:DisabledPath, [DateTime]::UtcNow.ToString('o'), (New-Object Text.UTF8Encoding($false)))
+Write-Lifecycle @{ Disabled = $true; RecoveryEnabled = $false; LifecycleState = 'Stopping'; LastEventUtc = [DateTime]::UtcNow.ToString('o') }
+Write-LifecycleEvent 'StopRequested' 'PersistentDisable'
+$state = Read-Lifecycle
+$task = Get-OwnGuestTask
+if ($task) { try { Stop-ScheduledTask -TaskName $script:GuestTaskName -ErrorAction Stop } catch { Write-LifecycleEvent 'TaskStopUnavailable' 'ContinueIdentityCheckedStop' } }
+if ($state -and (Test-OwnSupervisor ([int]$state.SupervisorPid))) {
+    Stop-Process -Id ([int]$state.SupervisorPid) -ErrorAction SilentlyContinue
 }
-Remove-Item -LiteralPath $pidPath
-Write-Output 'Only the tracked guest proxy instance was stopped. Existing proxies and system settings were not changed.'
+Stop-OwnedCore
+Write-Lifecycle @{ SupervisorPid = 0; CorePid = 0; RecoveryEnabled = $false; Disabled = $true; LifecycleState = 'Disabled'; LastEventUtc = [DateTime]::UtcNow.ToString('o') }
+Write-Output 'This guest instance is persistently disabled and its identity-checked processes were stopped.'
+Write-Output 'Supervisor and login startup will not restart it. Explicit Start-GuestProxy.ps1 enables recovery again; unrelated proxies were untouched.'

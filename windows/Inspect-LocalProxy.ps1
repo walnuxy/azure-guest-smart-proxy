@@ -9,12 +9,14 @@ $deploymentPath = Join-Path $script:StateRoot 'deployment.json'
 if (Test-Path -LiteralPath $deploymentPath) { $old = Read-JsonFile $deploymentPath; $selfPorts = @([int]$old.MixedPort, [int]$old.ApiPort) }
 $descriptions = New-Object Collections.Generic.List[object]
 $observedEnv = @()
-foreach ($name in @('HTTP_PROXY','HTTPS_PROXY','ALL_PROXY','http_proxy','https_proxy','all_proxy')) {
-    $value = [Environment]::GetEnvironmentVariable($name, 'Process')
+foreach ($scope in @('Process','User','Machine')) {
+foreach ($name in @('HTTP_PROXY','HTTPS_PROXY','ALL_PROXY','WS_PROXY','WSS_PROXY','http_proxy','https_proxy','all_proxy')) {
+    $value = [Environment]::GetEnvironmentVariable($name, $scope)
     if ($value) {
-        $safe = Get-ProxyDescription $value ('environment:' + $name)
+        $safe = Get-ProxyDescription $value ('environment:' + $scope + ':' + $name)
         if ($safe) { $descriptions.Add($safe); $observedEnv += $safe }
     }
+}
 }
 $wininet = $null
 try { $wininet = Get-ItemProperty 'HKCU:/Software/Microsoft/Windows/CurrentVersion/Internet Settings' } catch { }
@@ -54,7 +56,7 @@ foreach ($candidate in ($descriptions | Where-Object { $_.Uri -and $selfPorts -n
 $sources = @()
 foreach ($path in (Get-RuleSourceCandidates)) {
     $rules = @(Read-SafeLocalRules $path)
-    $sources += [pscustomobject]@{ Path = $path; RuleCount = $rules.Count; ContainsAcademicDirect = [bool]($rules | Where-Object { $_ -match '(ieee\.org|springer\.com|sciencedirect\.com),DIRECT' }); Sha256 = (Get-FileHash -LiteralPath $path -Algorithm SHA256).Hash }
+    $sources += [pscustomobject]@{ Path = $path; RuleCount = $rules.Count; ContainsAcademicDirect = [bool]($rules | Where-Object { $_ -match '(ieee\.org|springer\.com|sciencedirect\.com),DIRECT' }); Sha256 = (Get-GuestFileHash -LiteralPath $path -Algorithm SHA256).Hash }
 }
 $report = [ordered]@{ SchemaVersion = 1; GeneratedUtc = [DateTime]::UtcNow.ToString('o'); ComputerName = $env:COMPUTERNAME; UserName = $env:USERNAME; ProxyEnvironment = $observedEnv; WinINET = $wininetSummary; Candidates = $results; RuleSources = $sources; CredentialsRedacted = $true; SelfPortsExcluded = $selfPorts }
 Write-JsonFile $report (Join-Path $script:StateRoot 'local-proxy-report.json')

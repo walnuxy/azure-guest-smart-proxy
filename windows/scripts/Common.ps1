@@ -14,6 +14,15 @@ function Write-JsonFile($Value, [string]$Path) {
     [IO.File]::WriteAllText($Path, $text, (New-Object Text.UTF8Encoding($false)))
 }
 function Read-JsonFile([string]$Path) { Get-Content -LiteralPath $Path -Raw -Encoding UTF8 | ConvertFrom-Json }
+function Get-GuestFileHash {
+    [CmdletBinding()]
+    param([Parameter(Mandatory=$true)][string]$LiteralPath,[ValidateSet('SHA256')][string]$Algorithm='SHA256')
+    $stream = [IO.File]::OpenRead($LiteralPath)
+    $hasher = [Security.Cryptography.SHA256]::Create()
+    try { $hash = [BitConverter]::ToString($hasher.ComputeHash($stream)).Replace('-','') }
+    finally { $stream.Dispose(); $hasher.Dispose() }
+    [pscustomobject]@{ Algorithm='SHA256'; Hash=$hash; Path=[IO.Path]::GetFullPath($LiteralPath) }
+}
 function Get-PropertyValue($Object, [string]$Name, $Default = $null) {
     if ($null -ne $Object -and $Object.PSObject.Properties[$Name]) { return $Object.$Name }
     return $Default
@@ -63,7 +72,7 @@ function Get-CorePath {
                 if (!(Test-Path -LiteralPath $manifestPath)) { throw 'Packaged core has no provenance manifest. Verify its official source before use.' }
                 $manifest = Read-JsonFile $manifestPath
                 $expectedHash = [string](Get-PropertyValue $manifest.core 'sha256' '')
-                if (!$expectedHash -or (Get-FileHash -LiteralPath $resolved -Algorithm SHA256).Hash -ne $expectedHash) { throw 'Packaged Mihomo hash does not match PROVENANCE.json. Do not execute it; verify or replace it from the official source.' }
+                if (!$expectedHash -or (Get-GuestFileHash -LiteralPath $resolved -Algorithm SHA256).Hash -ne $expectedHash) { throw 'Packaged Mihomo hash does not match PROVENANCE.json. Do not execute it; verify or replace it from the official source.' }
             }
             return $resolved
         }
