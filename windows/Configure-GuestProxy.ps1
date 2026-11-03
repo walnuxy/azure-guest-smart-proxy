@@ -32,6 +32,23 @@ $azure['ip-stack'] = [ordered]@{ mode = 'mips'; 'congestion-controller' = 'bbr3'
 $proxies.Add($azure)
 $names = New-Object Collections.Generic.List[string]
 $names.Add('AzureGuest')
+# Optional HTTPS identity is issued separately for each device.
+$httpsPath = Join-Path $PSScriptRoot 'https-credentials.json'
+$dnsRoute = 'AUTO'
+if (Test-Path -LiteralPath $httpsPath) {
+    $https = Read-JsonFile $httpsPath
+    foreach ($field in @('server','port','uuid','servername','path')) {
+        if ([string]::IsNullOrWhiteSpace([string](Get-PropertyValue $https $field ''))) { throw ('Missing HTTPS credential field: ' + $field) }
+    }
+    $identity = [Guid]::Empty
+    if (![Guid]::TryParse([string]$https.uuid, [ref]$identity) -or $identity -eq [Guid]::Empty) { throw 'HTTPS uuid must be an issued, nonzero UUID.' }
+    if ([int]$https.port -lt 1 -or [int]$https.port -gt 65535) { throw 'Invalid HTTPS port.' }
+    if (!([string]$https.path).StartsWith('/')) { throw 'HTTPS WebSocket path must start with /.' }
+    $proxies.Add([ordered]@{ name = 'AzureHTTPS'; type = 'vless'; server = [string]$https.server; port = [int]$https.port; uuid = [string]$https.uuid; tls = $true; servername = [string]$https.servername; network = 'ws'; 'ws-opts' = @{ path = [string]$https.path; headers = @{ Host = [string]$https.servername } }; udp = $true })
+    $names.Insert(0, 'AzureHTTPS')
+    $dnsRoute = 'AzureHTTPS'
+    Protect-PrivateFile $httpsPath
+}
 $usedPorts = @()
 $fallbacks = @()
 foreach ($candidate in @($report.Candidates | Where-Object Healthy)) {
@@ -79,7 +96,10 @@ foreach ($file in @('Country.mmdb','geosite.dat')) {
     Copy-Item -LiteralPath $dataPath -Destination (Join-Path $script:StateRoot $file) -Force
 }
 $cnDns = @('https://dns.alidns.com/dns-query#DIRECT','https://doh.pub/dns-query#DIRECT')
-$config = [ordered]@{ 'mixed-port' = $mixedPort; 'allow-lan' = $false; 'bind-address' = '127.0.0.1'; mode = 'rule'; 'log-level' = 'info'; ipv6 = $false; 'external-controller' = ('127.0.0.1:' + $apiPort); secret = (New-RandomSecret); tun = @{ enable = $false }; 'geodata-mode' = $false; dns = @{ enable = $true; listen = '127.0.0.1:0'; ipv6 = $false; 'enhanced-mode' = 'redir-host'; 'default-nameserver' = @('223.5.5.5','119.29.29.29'); nameserver = @('https://1.1.1.1/dns-query#AUTO'); 'nameserver-policy' = @{ 'geosite:cn' = $cnDns }; 'proxy-server-nameserver' = $cnDns; 'direct-nameserver' = $cnDns }; proxies = @($proxies.ToArray()); 'proxy-groups' = @(@{ name = 'AUTO'; type = 'fallback'; proxies = @($names.ToArray()); url = 'https://chatgpt.com/robots.txt'; 'expected-status' = 200; interval = 30; timeout = 5000; lazy = $false }); rules = @($rules.ToArray()) }
+$proxyDns = @(('https://1.1.1.1/dns-query#' + $dnsRoute), ('https://1.0.0.1/dns-query#' + $dnsRoute))
+$dnsPolicy = @{ 'geosite:cn' = $cnDns }
+foreach ($domain in @('chatgpt.com','openai.com','oaistatic.com','oaiusercontent.com')) { $dnsPolicy['+.' + $domain] = $proxyDns }
+$config = [ordered]@{ 'mixed-port' = $mixedPort; 'allow-lan' = $false; 'bind-address' = '127.0.0.1'; mode = 'rule'; 'log-level' = 'info'; ipv6 = $false; 'external-controller' = ('127.0.0.1:' + $apiPort); secret = (New-RandomSecret); tun = @{ enable = $false }; 'geodata-mode' = $false; dns = @{ enable = $true; listen = '127.0.0.1:0'; ipv6 = $false; 'enhanced-mode' = 'redir-host'; 'default-nameserver' = @('223.5.5.5','119.29.29.29'); nameserver = $proxyDns; 'nameserver-policy' = $dnsPolicy; 'proxy-server-nameserver' = $cnDns; 'direct-nameserver' = $cnDns }; proxies = @($proxies.ToArray()); 'proxy-groups' = @(@{ name = 'AUTO'; type = 'fallback'; proxies = @($names.ToArray()); url = 'https://chatgpt.com/robots.txt'; 'expected-status' = 200; interval = 30; timeout = 5000; lazy = $false }); rules = @($rules.ToArray()) }
 $configPath = Join-Path $script:StateRoot 'config.json'
 if (Test-Path -LiteralPath $configPath) { Copy-Item -LiteralPath $configPath -Destination ($configPath + '.backup-' + (Get-Date -Format 'yyyyMMdd-HHmmss')) }
 Write-JsonFile $config $configPath

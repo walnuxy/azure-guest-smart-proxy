@@ -1,5 +1,7 @@
 # Apple / Shadowrocket 模板
 
+2026-11-03 新增 `Apple-HTTPS.example.conf`：VLESS + WebSocket + TLS，供 WireGuard 链路不可用时使用。须填写独立签发的 UUID、TLS 主机名和 WebSocket 路径，并在目标手机验证；详见 [HTTPS 与 DNS 更新](../docs/HTTPS-AND-DNS.md)。
+
 每台设备向自己的服务器管理员申请独立 peer，填写 example 文件占位符后在本机另存配置；示例没有可用授权。不要将真实配置提交到 Git。
 
 完整模板可在 Shadowrocket 配置页导入，代理组选 AzureApple，全局路由选“配置”。若导入不支持此节点格式，先按标准 WireGuard 文件添加节点并选中，再导入 Apple-Rules-Only.conf。节点字段/版本差异参照客户端官方或作者文档，最终以实机验证为准。

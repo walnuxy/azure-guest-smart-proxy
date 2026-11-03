@@ -30,3 +30,7 @@ config.yaml
 config.toml
 config.before-*
 *import-link*.json
+https-credentials.json
+Apple-HTTPS.conf
+system-proxy-before-*.json
+windows-dns-before*.json

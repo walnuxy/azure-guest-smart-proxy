@@ -1,6 +1,14 @@
 # 更新记录
 
-日期：2026-11-01，北京时间。下面是公开源码整理记录，实际授权身份与部署证据保留在私有环境。
+## 2026-11-03 — HTTPS 接入与 DNS / WinINET 更新
+
+- Windows 可选独立 HTTPS 凭据，生成 AzureHTTPS → AzureGuest → 本机健康备用；兼容无 HTTPS 凭据的旧部署。
+- Cloudflare 双 DoH、OpenAI 域名 DNS 策略；明确说明 HTTPS DNS 绑定与线路回退的区别。
+- 发布当前源电脑的脱敏配置快照和完整规则，真实身份与端点替换为占位符。
+- 发布 WinINET 每连接代理同步实现和 Apple HTTPS 模板；系统代理/DNS 不纳入默认安装。
+- 说明 Quick Tunnel 域名变化、服务器准备、旧设备升级及目标机验收要求。详见 docs/HTTPS-AND-DNS.md。
+
+以下为 2026-11-01 的公开源码整理记录，实际授权身份与部署证据保留在私有环境。
 
 ## v1 — 访客部署基线
 

@@ -10,6 +10,8 @@
 
 每个设备使用独立 peer。服务器管理员需要先完成相应 peer 登记、互联网转发和访客隔离；本仓库不会替你配置服务器或自动获得授权。
 
+如已获本设备专用的 HTTPS 授权，可另外填写 `https-credentials.json`，Configure 会将 HTTPS 放在 WireGuard 前面。旧部署更新与 DNS 行为见 [HTTPS 与 DNS 更新](HTTPS-AND-DNS.md)。
+
 ## 为本机文件生成清单
 
 公开源码没有沿用私有授权包的 SHA 清单。完成官方核心和凭据校验后，在 windows 目录执行：

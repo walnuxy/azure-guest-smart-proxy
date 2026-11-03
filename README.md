@@ -2,7 +2,9 @@
 
 Windows 访客智能代理的公开源码，以及 Apple / Shadowrocket 配置模板。Windows 本地入口由 Mihomo 提供，WireGuard 连接自己的服务器；按规则分流，并可使用本机已运行且健康的代理作为备用。
 
-当前源码：**v3**。本仓库不提供任何可连接现有服务器的授权。
+当前源码：**v3 + 2026-11-03 HTTPS / DNS 更新**。本仓库不提供任何可连接现有服务器的授权。
+
+本次新增可选 VLESS / WebSocket / TLS 首选线路、OpenAI DNS 路径、WinINET 代理同步脚本及 Apple HTTPS 模板。升级方式、源电脑配置示例和适用范围见 [HTTPS 与 DNS 更新](docs/HTTPS-AND-DNS.md)。已有 guest 包不会自动获得新线路。
 
 ## 这几次更新
 
